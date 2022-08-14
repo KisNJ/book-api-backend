@@ -15,6 +15,7 @@ const User = require("./models/user");
 const indexRouter = require("./routes/index");
 const apiRouter = require("./routes/api");
 const signUpRouter = require("./routes/signup");
+const loginRouter = require("./routes/login");
 const app = express();
 app.use(cors());
 mongoose.connect(process.env.MONGO_URL, {
@@ -27,11 +28,13 @@ passport.use(
     User.findOne({ username }, (err, user) => {
       if (err) return done(err);
       if (!user) return done(null, false, { message: "Incorrect username" });
-      bcrypt.compare(user.password, password, (err, res) => {
-        if (res) return done(null, user);
-        return done(null, false, { message: "Incorrect password" });
+      bcrypt.compare(password, user.password, (err, res) => {
+        if (res) {
+          return done(null, user);
+        } else {
+          return done(null, false, { message: "Incorrect password" });
+        }
       });
-      return done(err);
     });
   }),
 );
@@ -69,6 +72,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/api", apiRouter);
 app.use("/signup", signUpRouter);
+app.use("/login", loginRouter);
 app.use((req, res, next) => {
   next(createError(404));
 });
