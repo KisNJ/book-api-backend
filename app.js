@@ -14,7 +14,7 @@ const cors = require("cors");
 const User = require("./models/user");
 const indexRouter = require("./routes/index");
 const apiRouter = require("./routes/api");
-
+const signUpRouter = require("./routes/signup");
 const app = express();
 app.use(cors());
 mongoose.connect(process.env.MONGO_URL, {
@@ -68,7 +68,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // catch 404 and forward to error handler
 app.use("/", indexRouter);
 app.use("/api", apiRouter);
-
+app.use("/signup", signUpRouter);
 app.use((req, res, next) => {
   next(createError(404));
 });
