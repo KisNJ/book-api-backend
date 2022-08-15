@@ -2,7 +2,9 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const router = express.Router();
 const User = require("../models/user");
+const passport = require("passport");
 router.post("/", (req, res, next) => {
+  console.log(req.body);
   if (!req.body || !req.body.password || !req.body.username) {
     res
       .status(400)
@@ -12,6 +14,7 @@ router.post("/", (req, res, next) => {
   bcrypt.hash(req.body.password, 10, async (err, hashedPassword) => {
     if (err) next(err);
     try {
+      console.log("try");
       await User.create({
         username: req.body.username,
         password: hashedPassword,
@@ -25,5 +28,12 @@ router.post("/", (req, res, next) => {
   });
   // res.sendStatus(200);
 });
-
+router.get("/check", (req, res) => {
+  if (req.user) {
+    res.status(200).json(req.user);
+  } else {
+    res.status(401).json({ msg: "Not logged in!" });
+  }
+  // console.log(req.user);
+});
 module.exports = router;

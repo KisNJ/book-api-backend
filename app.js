@@ -4,7 +4,7 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 require("dotenv").config();
-
+const bodyParser = require("body-parser");
 const session = require("express-session");
 const mongoose = require("mongoose");
 const LocalStrategy = require("passport-local").Strategy;
@@ -17,7 +17,7 @@ const apiRouter = require("./routes/api");
 const signUpRouter = require("./routes/signup");
 const loginRouter = require("./routes/login");
 const app = express();
-app.use(cors());
+
 mongoose.connect(process.env.MONGO_URL, {
   useUnifiedTopology: true,
   useNewUrlParser: true,
@@ -49,30 +49,40 @@ passport.deserializeUser((id, done) => {
     done(err, user);
   });
 });
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: "http://localhost:3000", // <-- location of the react app were connecting to
+    credentials: true,
+  }),
+);
 app.use(
   session({
-    secret: process.env.SECRET,
-    resave: false,
+    secret: "secretcode",
+    resave: true,
     saveUninitialized: true,
   }),
 );
-passport.initialize();
-passport.session();
-// view engine setup
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "jade");
-
-app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(cookieParser("secretcode"));
+app.use(passport.initialize());
+app.use(passport.session());
+// require("./passportConfig")(passport);
 
 // catch 404 and forward to error handler
 app.use("/", indexRouter);
 app.use("/api", apiRouter);
 app.use("/signup", signUpRouter);
 app.use("/login", loginRouter);
+app.get("/logout", (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      res.status(500).json({ msg: "Failed to log out!" });
+    } else {
+      res.status(200).json({ msg: "Logged out succesfully!" });
+    }
+  });
+});
 app.use((req, res, next) => {
   next(createError(404));
 });
@@ -87,5 +97,4 @@ app.use((err, req, res) => {
   res.status(err.status || 500);
   res.render("error");
 });
-
 module.exports = app;
