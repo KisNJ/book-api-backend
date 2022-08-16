@@ -28,19 +28,15 @@ const getBlogById = async (req, res, next) => {
       .populate({
         path: "comments.author",
       });
-    // console.log(req.user._id === blog.author._id);
-    // console.log(blog.author._id);
-    // console.log(req.user);
-    if (blog.author._id.toString() === req.user._id.toString()) {
-      console.log("It1s yours ");
-    }
-    if (blog.public === false && blog.author._id !== req.user._id) {
+    if (
+      blog.public === false &&
+      blog.author._id.toString() !== req.user._id.toString()
+    ) {
       res.send(401).json({ msg: "Only the owner can see private blogs!" });
     } else {
       res.json(blog);
     }
   } catch (error) {
-    console.log(error);
     res
       .status(500)
       .json({ msg: "Error maybe check your url or internet connection!" });
@@ -68,21 +64,28 @@ const creteNewBlog = async (req, res, next) => {
   }
 };
 const createNewComment = async (req, res, next) => {
+  console.log("aaa");
   try {
-    if (!req.isAuthenticated()) {
+    if (!req.user || !req.isAuthenticated()) {
       res.sendStatus(401);
+    } else {
+      const commentCreated = await Comment.create({
+        author: req.user._id,
+        content: req.body.content,
+        created_at: new Date(),
+        blog_id: req.params.id,
+      });
+      await Blog.updateOne(
+        { _id: commentCreated.blog_id },
+        {
+          $push: { comments: commentCreated._id },
+        },
+      );
+      res.sendStatus(200);
     }
-    const commentCreated = await Comment.create({
-      author: req.user._id,
-      content: req.body.title,
-      created_at: new Date(),
-      blog_id: req.params.id,
-    });
-    await Blog.findById(commentCreated.blog_id, {
-      $push: { comments: commentCreated._id },
-    });
   } catch (error) {
-    next(error);
+    console.log(error);
+    res.sendStatus(500);
   }
 };
 module.exports = {

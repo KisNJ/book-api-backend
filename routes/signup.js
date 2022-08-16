@@ -29,7 +29,6 @@ router.post("/", (req, res, next) => {
   // res.sendStatus(200);
 });
 router.get("/check", (req, res) => {
-  console.log(req.user);
   if (req.user) {
     res.status(200).json(req.user);
   } else {
