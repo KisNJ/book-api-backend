@@ -36,7 +36,7 @@ const getBlogById = async (req, res, next) => {
       blog.public === false &&
       blog.author._id.toString() !== req.user._id.toString()
     ) {
-      res.send(401).json({ msg: "Only the owner can see private blogs!" });
+      res.status(401).json({ msg: "Only the owner can see private blogs!" });
     } else {
       res.json(blog);
     }
@@ -156,6 +156,73 @@ const updateComment = async (req, res) => {
     res.sendStatus(500);
   }
 };
+
+const deleteBlog = async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.sendStatus(401);
+    } else {
+      const blog_id = req.params.id;
+      if (!blog_id) {
+        res.sendStatus(400);
+      } else {
+        const findBlog = await Blog.findById(blog_id).populate("author");
+        if (findBlog.author._id.toString() !== req.user._id.toString()) {
+          res.sendStatus(401);
+        } else {
+          await Blog.updateOne({ _id: blog_id }, { ...content });
+          res.sendStatus(200);
+        }
+      }
+    }
+  } catch (error) {
+    res.sendStatus(500);
+  }
+};
+const updateBlog = async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.sendStatus(401);
+    } else {
+      const blog_id = req.params.id;
+      if (!blog_id) {
+        res.sendStatus(400);
+      } else {
+        const findBlog = await Blog.findById(blog_id).populate("author");
+        if (findBlog.author._id.toString() !== req.user._id.toString()) {
+          res.sendStatus(401);
+        } else {
+          await Blog.updateOne({ _id: blog_id }, { ...req.body.content });
+          res.sendStatus(200);
+        }
+      }
+    }
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+};
+const getAllOwnBlogs = async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.sendStatus(401);
+    } else {
+      const private = await Blog.find({
+        author: req.user._id,
+        public: false,
+      }).populate("author");
+      const public = await Blog.find({
+        author: req.user._id,
+        public: true,
+      }).populate("author");
+
+      res.status(200).json({ private, public });
+    }
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+};
 module.exports = {
   getApiIndexPage,
   getAllPublicBlogs,
@@ -164,4 +231,7 @@ module.exports = {
   createNewComment,
   deleteComment,
   updateComment,
+  deleteBlog,
+  updateBlog,
+  getAllOwnBlogs,
 };

@@ -38,7 +38,11 @@ passport.use(
     });
   }),
 );
-
+// (async () => {
+//   const User2 = require("./models/user");
+//   await User2.create({ username: "dasha", password: "alma" });
+//   await User2.updateOne({ username: "dasha" }, { password: "ss" });
+// })();
 passport.serializeUser((user, done) => {
   console.log("serialze");
   done(null, user.id);
