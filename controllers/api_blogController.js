@@ -95,26 +95,21 @@ const createNewComment = async (req, res, next) => {
 const deleteComment = async (req, res) => {
   try {
     if (!req.isAuthenticated()) {
-      console.log("no auth");
       res.sendStatus(401);
     } else {
-      console.log(req.params);
       const comment_id = req.params.commentID;
       const blog_id = req.params.id;
-      console.log(blog_id);
       if (!comment_id || !blog_id) {
         res.sendStatus(400);
       } else {
         const findComment = await Comment.findById(comment_id).populate(
           "author",
         );
-        console.log(findComment);
         if (findComment.author._id.toString() !== req.user._id.toString()) {
           res.sendStatus(401);
         } else {
-          console.log("not here");
           await Comment.deleteOne({ _id: comment_id });
-          console.log("comment deleted");
+
           await Blog.updateOne(
             { _id: blog_id },
             {
@@ -131,6 +126,36 @@ const deleteComment = async (req, res) => {
     res.sendStatus(500);
   }
 };
+
+const updateComment = async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.sendStatus(401);
+    } else {
+      const comment_id = req.params.commentID;
+      const blog_id = req.params.id;
+      if (!comment_id || !blog_id) {
+        res.sendStatus(400);
+      } else {
+        const findComment = await Comment.findById(comment_id).populate(
+          "author",
+        );
+        if (findComment.author._id.toString() !== req.user._id.toString()) {
+          res.sendStatus(401);
+        } else {
+          await Comment.updateOne(
+            { _id: comment_id },
+            { $set: { content: req.body.content } },
+            { runValidators: true },
+          );
+          res.sendStatus(200);
+        }
+      }
+    }
+  } catch (error) {
+    res.sendStatus(500);
+  }
+};
 module.exports = {
   getApiIndexPage,
   getAllPublicBlogs,
@@ -138,4 +163,5 @@ module.exports = {
   creteNewBlog,
   createNewComment,
   deleteComment,
+  updateComment,
 };
