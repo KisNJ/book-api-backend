@@ -7,6 +7,7 @@ router.get("/", apiBlog.getApiIndexPage);
 
 router.get("/blogs", apiBlog.getAllPublicBlogs);
 router.post("/blogs", apiBlog.creteNewBlog);
+router.delete("/blogs/:id/comment/:commentID", apiBlog.deleteComment);
 router.post("/blogs/:id/comment", apiBlog.createNewComment);
 router.get("/blogs/:id", apiBlog.getBlogById);
 module.exports = router;

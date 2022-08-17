@@ -15,6 +15,7 @@ const getAllPublicBlogs = async (req, res, next) => {
       "author",
       "-password",
     );
+
     res.json(blogs);
   } catch (error) {
     res.sendStatus(500);
@@ -26,7 +27,10 @@ const getBlogById = async (req, res, next) => {
     const blog = await Blog.findById(req.params.id)
       .populate("author")
       .populate({
-        path: "comments.author",
+        path: "comments",
+        populate: {
+          path: "author",
+        },
       });
     if (
       blog.public === false &&
@@ -78,7 +82,7 @@ const createNewComment = async (req, res, next) => {
       await Blog.updateOne(
         { _id: commentCreated.blog_id },
         {
-          $push: { comments: commentCreated._id },
+          $push: { comments: { $each: [commentCreated._id], $position: 0 } },
         },
       );
       res.sendStatus(200);
@@ -88,10 +92,50 @@ const createNewComment = async (req, res, next) => {
     res.sendStatus(500);
   }
 };
+const deleteComment = async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      console.log("no auth");
+      res.sendStatus(401);
+    } else {
+      console.log(req.params);
+      const comment_id = req.params.commentID;
+      const blog_id = req.params.id;
+      console.log(blog_id);
+      if (!comment_id || !blog_id) {
+        res.sendStatus(400);
+      } else {
+        const findComment = await Comment.findById(comment_id).populate(
+          "author",
+        );
+        console.log(findComment);
+        if (findComment.author._id.toString() !== req.user._id.toString()) {
+          res.sendStatus(401);
+        } else {
+          console.log("not here");
+          await Comment.deleteOne({ _id: comment_id });
+          console.log("comment deleted");
+          await Blog.updateOne(
+            { _id: blog_id },
+            {
+              $pull: {
+                comments: comment_id,
+              },
+            },
+          );
+          res.sendStatus(200);
+        }
+      }
+    }
+  } catch (error) {
+    res.sendStatus(500);
+  }
+};
 module.exports = {
   getApiIndexPage,
   getAllPublicBlogs,
   getBlogById,
   creteNewBlog,
   createNewComment,
+  deleteComment,
 };
