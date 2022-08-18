@@ -38,17 +38,11 @@ passport.use(
     });
   }),
 );
-// (async () => {
-//   const User2 = require("./models/user");
-//   await User2.create({ username: "dasha", password: "alma" });
-//   await User2.updateOne({ username: "dasha" }, { password: "ss" });
-// })();
+
 passport.serializeUser((user, done) => {
-  console.log("serialze");
   done(null, user.id);
 });
 passport.deserializeUser((id, done) => {
-  console.log("de serialze");
   User.findById(id, (err, user) => {
     done(err, user);
   });
@@ -63,12 +57,12 @@ app.use(
 );
 app.use(
   session({
-    secret: "secretcode",
+    secret: process.env.SECRET,
     resave: true,
     saveUninitialized: true,
   }),
 );
-app.use(cookieParser("secretcode"));
+app.use(cookieParser(process.env.SECRET));
 app.use(passport.initialize());
 app.use(passport.session());
 // require("./passportConfig")(passport);
